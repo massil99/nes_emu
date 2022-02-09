@@ -99,26 +99,16 @@ void set_indirect_x(u16 addr, u8 val){
 	assert(in_addr < MEMORY_SIZE);	
 	memory[in_addr] = val;
 }
-u8 get_indirect_y(u16 addr){
-	u16 sum = (cpu.Y + addr) & 0xff; 	
 
-	u8 l_in_addr = memory[sum];
-
-	sum += 1;
-	sum = sum & 0xff;
-	u16 in_addr = (memory[sum] << 8) + l_in_addr;
+u8 get_indirect_y(u8 addr){
+	u16 in_addr = ((memory[(u8)(addr + 1)] << 8) + memory[(u8)addr]) + cpu.Y; 	
 
 	assert(in_addr < MEMORY_SIZE);	
 	return memory[in_addr];
 }
-void set_indirect_y(u16 addr, u8 val){
-	u16 sum = (cpu.Y + addr) & 0xff; 	
 
-	u8 l_in_addr = memory[sum];
-
-	sum += 1;
-	sum = sum & 0xff;
-	u16 in_addr = (memory[sum] << 8) + l_in_addr;
+void set_indirect_y(u8 addr, u8 val){
+	u16 in_addr = ((memory[(u8)(addr + 1)] << 8) + memory[(u8)addr]) + cpu.Y; 	
 
 	assert(in_addr < MEMORY_SIZE);	
 	memory[in_addr] = val;

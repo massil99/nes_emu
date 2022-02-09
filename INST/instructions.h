@@ -1,6 +1,6 @@
 #ifndef INSTRUCTIONS_H_H
 #define INSTRUCTIONS_H_H
-	
+
 #include "ADC.h"
 #include "AND.h"
 #include "ASL.h"
@@ -171,6 +171,7 @@
 #define OPC_RTSIMP 0x60
 
 #define OPC_SBCI    0xe9
+#define OPC_SBCI_U  0xeB
 #define OPC_SBCZP   0xe5
 #define OPC_SBCZPX  0xf5
 #define OPC_SBCA    0xed

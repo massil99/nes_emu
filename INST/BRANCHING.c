@@ -80,11 +80,14 @@ void JMP(u16 m){
 #define JMP_Absolute(addr) JMP(addr)
 
 void JMP_Indirect(u16 addr){
-	cpu.PC = memory[addr] + (memory[addr +1]<<8); 
+	if(addr & 0xff == 0xff)
+		cpu.PC = memory[addr] + (memory[addr & 0xff00]<<8); 
+	else
+		cpu.PC = memory[addr] + (memory[addr +1]<<8); 
 }
 
 void JSR(u16 addr){
-	u16 ret = cpu.PC;
+	u16 ret = cpu.PC + 2;
 	push_word(ret);
 	JMP(addr);
 }

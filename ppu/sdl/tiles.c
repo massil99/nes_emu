@@ -9,8 +9,8 @@ extern u8 ppu_memory[PPU_MEMORY_SIZE];
 #define rec_s 5
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 1700;
-const int SCREEN_HEIGHT = 100;
+const int SCREEN_WIDTH = 150;
+const int SCREEN_HEIGHT = 150;
 
 void calculate_tile(int index, u8 tile[8][8])
 {
@@ -79,8 +79,8 @@ void calculate_tile(int index, u8 tile[8][8])
     tile[7][6] = U8_BIT6(ppu_memory[index + 7]) + (U8_BIT6(ppu_memory[8 + index + 7]) << 1);
     tile[7][7] = U8_BIT7(ppu_memory[index + 7]) + (U8_BIT7(ppu_memory[8 + index + 7]) << 1);
 }
-int main(int argc, char *args[])
-{
+
+int main(int argc, char *args[]){
     char *path = "mario.nes";
     FILE *file = fopen(path, "rb");
 
@@ -109,90 +109,101 @@ int main(int argc, char *args[])
     for (int i = 0; i < 5; i++)
         fread(&buf, sizeof(u8), 1, file);
 
-    for (int i = 0; i < PRG_SIZE * 16384; i++)
-    {
+    for (int i = 0; i < PRG_SIZE * 16384; i++){
         fread(&buf, sizeof(u8), 1, file);
     }
-    for (int i = 0; i < 8192; i++)
-    {
+
+    for (int i = 0; i < 8192; i++){
         fread(&buf, sizeof(u8), 1, file);
         ppu_memory[i] = buf;
     }
     fclose(file);
 
-    //The window we'll be rendering to
     SDL_Window *window = NULL;
     SDL_Renderer *renderer = NULL;
 
-    //Initialize SDL
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0){
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
     }
     else
     {
         //Create window
-        window = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
-        if (window == NULL)
-        {
-            printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
+        window = SDL_CreateWindow(	"SDL Tutorial", 
+									SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+									SCREEN_WIDTH, SCREEN_HEIGHT, 
+									SDL_WINDOW_SHOWN);
+        if (window == NULL){
+            fprintf(stderr, "Window could not be created! SDL_Error: %s\n", SDL_GetError());
+			return EXIT_FAILURE;
         }
-        else
+
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+		
+		if (renderer == NULL) {
+            fprintf(stderr, "Rnederer could not be created! SDL_Error: %s\n", SDL_GetError());
+			return EXIT_FAILURE;
+		}
+
+        u8 t[8][8] = {0};
+
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        for (int tiles = 0; tiles < 256; tiles++)
         {
-
-            renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
-            u8 t[8][8] = {0};
-
-            bool quite = false;
-            while (!quite)
+            calculate_tile(tiles * 16, t);
+            for (int i = 7; i >= 0; i--)
             {
-                SDL_SetRenderDrawColor(renderer, 51, 51, 51, 255);
-                SDL_RenderClear(renderer);
-                for (int tiles = 0; tiles < 30; tiles++)
+                for (int j = 7; j >= 0; j--)
                 {
-                    calculate_tile(tiles * 16, t);
-                    for (int i = 7; i >= 0; i--)
+                    switch (t[i][j])
                     {
-                        for (int j = 7; j >= 0; j--)
-                        {
-                            switch (t[i][j])
-                            {
-                            case 0:
-                                SDL_SetRenderDrawColor(renderer, 51, 51, 51, 255);
-                                break;
-                            case 1:
-                                SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-                                break;
-                            case 2:
-                                SDL_SetRenderDrawColor(renderer, 200, 150, 0, 255);
-                                break;
-                            case 3:
-                                SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
-                                break;
-                            }
-                            SDL_Rect rect = {tiles * rec_s * 8 + rec_s *(7-j), rec_s * i, rec_s, rec_s};
-                            SDL_RenderFillRect(renderer, &rect);
-                        }
-                    }
-                }
-                SDL_RenderPresent(renderer);
-
-                SDL_Event event;
-                if (SDL_PollEvent(&event))
-                {
-                    switch (event.type)
-                    {
-                    case SDL_QUIT:
-                        exit(0);
+                    case 0:
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                         break;
-
-                    default:
+                    case 1:
+                        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+                        break;
+                    case 2:
+                        SDL_SetRenderDrawColor(renderer, 200, 150, 0, 255);
+                        break;
+                    case 3:
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 255, 255);
                         break;
                     }
+					int max_tiles = 20;
+                    SDL_Rect rect = {
+						(tiles * rec_s * 8) % SCREEN_WIDTH + rec_s * (7-j) ,
+						(tiles / (SCREEN_WIDTH/(rec_s*8 +1))) * rec_s * 8 + rec_s * i,
+						rec_s, rec_s
+					};
+                    SDL_RenderFillRect(renderer, &rect);
                 }
             }
         }
+        SDL_RenderPresent(renderer);
+
+        bool quite = false;
+        while (!quite){
+            SDL_Event event;
+            if (SDL_PollEvent(&event)){
+                switch (event.type){
+                case SDL_QUIT:
+					quite = true;
+                    break;
+				case SDL_KEYDOWN:
+					switch(event.key.keysym.sym){
+						case SDLK_ESCAPE:
+							quite = true;
+							break;
+					}
+					break;
+
+                default:
+                    break;
+                }
+            }
+        }
+        
     }
     SDL_DestroyRenderer(renderer);
     //Destroy window

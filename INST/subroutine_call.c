@@ -24,11 +24,13 @@ void RTS(){
 	u8 hi = pull();
 	
 	cpu.PC = (hi<<8) + lo;
-	cpu.PC += 3;
 }
 
 void RTI(){
-	cpu.P = pull();
+	u8 status = pull();
+	cpu.P = 0x30 & cpu.P;
+	cpu.P |= (status & 0xcf);
+
 	u8 lo = pull();
 	u8 hi = pull();
 	

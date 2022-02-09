@@ -18,7 +18,7 @@ void set_absolute_y(u16 addr, u8 val);
 u8 get_indirect(u16 addr);
 u8 get_indirect_x(u16 addr);
 void set_indirect_x(u16 addr, u8 val);
-u8 get_indirect_y(u16 addr);
-void set_indirect_y(u16 addr, u8 val);
+u8 get_indirect_y(u8 addr);
+void set_indirect_y(u8 addr, u8 val);
 
 #endif // ADD_MODE_H_

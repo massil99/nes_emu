@@ -23,12 +23,14 @@ void PLA(){
 }
 
 void PHP(){
-	push(cpu.P | 0x10);
+	push(cpu.P | 0x30);
 }
 
 void PLP(){
-	u8 status = pull() | 0x20;
-	cpu.P = status;
+	u8 status = pull();
+	
+	cpu.P = 0x30 & cpu.P;
+	cpu.P |= (status & 0xcf);
 }
 
 void SEC(){

@@ -1,11 +1,11 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "stdint.h"
-#include "../bit_manipulation.h"
-#include "../memory.h"
-#include "../instructions.h"
-#include "../custom_types.h"
-#include "../add_mode.h"
+#include "../INST/bit_manipulation.h"
+#include "../INST/memory.h"
+#include "../INST/instructions.h"
+#include "../INST/custom_types.h"
+#include "../INST/add_mode.h"
 #include "../ppu/ppu.h"
 
 #include "time.h"
@@ -28,9 +28,7 @@ typedef struct {
 
 extern u8 memory[MEMORY_SIZE];
 extern CPU_registers cpu;
-extern u8 ppu_memory[PPU_MEMORY_SIZE];
-
-
+u8 ppu_memory[PPU_MEMORY_SIZE];
 
 int msleep(long msec){
     struct timespec ts;
@@ -63,20 +61,23 @@ int main(){
 	
 	u8 buf;
 
-	fread(&buf, sizeof(u8), 1, file);
+	// File signature
+	fread(&buf, sizeof(u8), 1, file); 
 	header.signature |= buf << 24;
-	fread(&buf, sizeof(u8), 1, file);
+	fread(&buf, sizeof(u8), 1, file); 
 	header.signature |= buf << 16;
 	fread(&buf, sizeof(u8), 1, file);
 	header.signature |= buf << 8;
 	fread(&buf, sizeof(u8), 1, file);
 	header.signature |= buf;
 
+	// Checking file signature
 	if(header.signature != INES_FILE_SIGNATURE){
 		fprintf(stderr, "[ERROR]: %s not a NES file\n", path);	
 		exit(EXIT_FAILURE);
 	}
 	
+	// Reading header information
 	fread(&header.PRG_SIZE, sizeof(u8), 1, file);
 	fread(&header.CHR_SIZE, sizeof(u8), 1, file);
 	fread(&header.FLAGS6,	sizeof(u8), 1, file);
@@ -85,50 +86,56 @@ int main(){
 	fread(&header.FLAGS9,	sizeof(u8), 1, file);
 	fread(&header.FLAGS10,  sizeof(u8), 1, file);
 
+	// Skiping blank bytes
 	for(int i = 0; i < 5; i++)
 		fread(&buf, sizeof(u8), 1, file);
 
+	// Loading trainer
 	if(U8_BIT2(header.FLAGS6)){
-		// Get trainer
 		printf("trainer available");
 	}
 	
+	// Loading PRG rom
 	if(header.PRG_SIZE == 1){
+		// Single page rom
 		for(int i = 0; i < 16384; i++){
 			fread(&buf, sizeof(u8), 1, file);
 			memory[i + PRG_ROM_START_LOWER_BANK] = buf;
 		}	
+		// Merroring
 		for(int i = 0; i < 16384; i++){
 			memory[i + PRG_ROM_START_UPPER_BANK] = memory[i + PRG_ROM_START_LOWER_BANK];
 		}	
 	} else {
+		// Double paged rom
 		for(int i = 0; i < header.PRG_SIZE*16384; i++){
 			fread(&buf, sizeof(u8), 1, file);
 			memory[i + PRG_ROM_START_LOWER_BANK] = buf;
 		}	
 	} 
+
+	/*************** RAM SHIT ************/
+/*	memory[0x180] = 0x33;
+	memory[0x17f] = 0x69;
+	memory[0x678] = 0xff;
+
+	memory[0x33] = 0xa3;
+	memory[0x97] = 0xff;
+	memory[0x98] = 0xff;
+
+	memory[0xff] = 0x46;
+	memory[0x0] = 0x01;
+	memory[0x245] = 0x012;*/
+	/****************************************/
+
+	// Loagding PPU information
 	for(int i = 0; i < 8192; i++){
 		fread(&buf, sizeof(u8), 1, file);
 		ppu_memory[i] = buf;
-		// printf("%02x ", ppu_memory[i]);
-		// if((i+1) % 4 == 0)
-		// 	printf("  ");
-		// if((i+1) % 16 == 0)
-		// 	printf("\n");
 	}	
 
-	u8 tile[8][8];
-	calculate_tile(112, tile);
-
-	for(int i = 0; i< 8; i++){
-		for(int j = 0; j<8; j++){
-			printf("%d ", tile[i][j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
 	
-/*	u16 addr = 0;
+	u16 addr = 0;
 	cpu.PC = memory[0xfffc] + (memory[0xfffd] << 8);
 	int i = 0;
 	while(i < 8991){
@@ -188,62 +195,62 @@ int main(){
 				break;
 
 			case OPC_ANDI:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				AND_Immediate(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 
 			case OPC_ANDZP:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				AND_ZeroPage(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDZPX:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				AND_ZeroPageX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDA:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				addr =  memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				AND_Absolute(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDAX:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				AND_AbsoluteX(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDAY:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				AND_AbsoluteY(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDINDX:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				AND_IndirectX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDINDY:
-				printf("%04x and ", cpu.PC);
+				printf("%04x AND ", cpu.PC);
 				AND_IndirectY(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 
 				break;
 			case OPC_ASLACC:
-				printf("%04x asl ", cpu.PC);
+				printf("%04x ASL ", cpu.PC);
 				ASL_Accumulator();
 				cpu.PC += 1;
 				break;
 			case OPC_ASLZP:
-				printf("%04x asl ", cpu.PC);
+				printf("%04x ASL ", cpu.PC);
 				ASL_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ASLZPX:
-				printf("%04x asl ", cpu.PC);
+				printf("%04x ASL ", cpu.PC);
 				ASL_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
@@ -282,12 +289,12 @@ int main(){
 				printf("%04x BITzp ", cpu.PC);
 				BIT_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
-				break;
+					   break;
 			case OPC_BITA:
 				printf("%04x BITa ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				BIT_Absolute(addr);
-				cpu.PC += 2;
+				cpu.PC += 3;
 				break;
 
 			case OPC_BMIR: 
@@ -373,13 +380,13 @@ int main(){
 				break;
 			case OPC_CMPAX:	
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				printf("%04x CMP %02x", cpu.A, memory[addr]);
+				printf("%04x CMP %02x", cpu.PC, memory[addr]);
 				CMP_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_CMPAY:	
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				printf("%04x CMP %02x", cpu.A,  memory[addr]);
+				printf("%04x CMP %02x", cpu.PC,  memory[addr]);
 				CMP_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
@@ -412,17 +419,17 @@ int main(){
 				break;
 
 			case OPC_CPYI:	
-				printf("%04x cpx ", cpu.PC);
+				printf("%04x cpy ", cpu.PC);
 				CPY_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPYZP:	
-				printf("%04x cpx ", cpu.PC);
+				printf("%04x cpy ", cpu.PC);
 				CPY_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPYA:	
-				printf("%04x cpx ", cpu.PC);
+				printf("%04x cpy ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				CPY_Absolute(addr);
 				cpu.PC += 3;
@@ -464,45 +471,45 @@ int main(){
 				break;
 
  			case OPC_EORI:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				EOR_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORZP:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				EOR_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORZPX: 
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				EOR_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORA:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				EOR_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORAX:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				EOR_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORAY:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				EOR_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORINDX:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				EOR_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORINDY:
-				printf("%04x eor ", cpu.PC);
+				printf("%04x EOR ", cpu.PC);
 				EOR_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
@@ -531,7 +538,7 @@ int main(){
 				break;
 
 			case OPC_INXIMP:
-				printf("%04x incx ", cpu.PC);
+				printf("%04x inx ", cpu.PC);
 				INX();
 				cpu.PC += 1;
 				break;
@@ -553,8 +560,8 @@ int main(){
 				break;
 
 			case OPC_JSRA:
-				printf("%04x jsr ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
+				printf("%04x jsr %04x | %02x %02x %02x", cpu.PC, addr, memory[cpu.PC], memory[cpu.PC+1],memory[cpu.PC+2]);
 				JSR(addr);
 				break;
 
@@ -586,18 +593,18 @@ int main(){
 				cpu.PC += 3;
 				break;
  			case OPC_LDAAY:
-				printf("%04x LDAay %x ", cpu.PC, get_absolute_y(memory[cpu.PC + 1]));
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
+				printf("%04x LDAay  @%04x = %02x ", cpu.PC, addr, get_absolute_y(addr));
 				LDA_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDAINDX:
-				printf("%04x LDAindx %x ", cpu.PC, get_indirect_x(memory[cpu.PC + 1]));
+				printf("%04x LDAindx @%04x = %02x ", cpu.PC, memory[cpu.PC+1], get_absolute_y(memory[cpu.PC+1]));
 				LDA_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break; 
 			case OPC_LDAINDY: 
-				printf("%04x LDAindy %x ", cpu.PC, get_indirect_y(memory[cpu.PC+1]));
+				printf("%04x LDAindy @%04x = %02x ", cpu.PC, memory[cpu.PC+1], get_absolute_y(memory[cpu.PC+1]));
 				LDA_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
@@ -652,7 +659,7 @@ int main(){
 				cpu.PC += 3;
 				break;
  			case OPC_LDYAX:
-				printf("%04x ldx ", cpu.PC);
+				printf("%04x ldy ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				LDY_AbsoluteX(addr);
 				cpu.PC += 3;
@@ -693,8 +700,8 @@ int main(){
 			case OPC_ING4 :
 			case OPC_ING5 :
 			case OPC_ING6 :
-				printf("%04x ING ", cpu.PC);
-				cpu.PC += 2;
+				printf("%04x NOP ", cpu.PC);
+				cpu.PC += 3;
 				break;
 
 			case OPC_SKB   :
@@ -710,8 +717,8 @@ int main(){
 			case OPC_SKB10 :
 			case OPC_SKB11 :
 			case OPC_SKB12 :
-				printf("%04x SKB ", cpu.PC);
-				cpu.PC += 1;
+				printf("%04x NOP ", cpu.PC);
+				cpu.PC += 2;
 				break;
 	
 			case OPC_NOP:
@@ -849,14 +856,15 @@ int main(){
 			case OPC_RTIIMP:
 				printf("%04x rti ", cpu.PC);
 				RTI();
-				cpu.PC += 1;
 				break;
 
 			case OPC_RTSIMP:
 				printf("%04x rts ", cpu.PC);
 				RTS();
+				cpu.PC++;
 				break;
 
+			case OPC_SBCI_U:
 			case OPC_SBCI:
 				printf("%04x SBCi %02x ", cpu.PC, memory[cpu.PC+1]);
 				SBC_Immediate(memory[cpu.PC+1]);
@@ -1152,43 +1160,43 @@ int main(){
 				break;
 
 			case OPC_ISCa    :
-				printf("%04x ISCa %02x ", cpu.PC, memory[addr]);
+				printf("%04x ISBa %02x ", cpu.PC, memory[addr]);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8);
 				ISC_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ISCax   :
-				printf("%04x ISCax %02x ", cpu.PC, get_absolute_x(memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8)));
+				printf("%04x ISBax %02x ", cpu.PC, get_absolute_x(memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8)));
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8);
 				ISC_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ISCay   :
-				printf("%04x ISCay %02x ", cpu.PC, get_absolute_y(memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8)));
+				printf("%04x ISBay %02x ", cpu.PC, get_absolute_y(memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8)));
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2]  << 8);
 				ISC_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ISCzp   :
-				printf("%04x ISCzp %02x ", cpu.PC, get_zero_page(memory[cpu.PC+1]));
+				printf("%04x ISBzp %02x ", cpu.PC, get_zero_page(memory[cpu.PC+1]));
 				addr = memory[cpu.PC+1];
 				ISC_ZeroPage(addr);
 				cpu.PC += 2;
 				break;
 			case OPC_ISCzpx  :
-				printf("%04x ISCzpx %02x ", cpu.PC, get_absolute_x(memory[cpu.PC+1]));
+				printf("%04x ISBzpx %02x ", cpu.PC, get_absolute_x(memory[cpu.PC+1]));
 				addr = memory[cpu.PC+1];
 				ISC_ZeroPageX(addr);
 				cpu.PC += 2;
 				break;
 			case OPC_ISCINDX :
-				printf("%04x ISCindx %02x ", cpu.PC, get_indirect_x(memory[cpu.PC+1]));
+				printf("%04x ISBindx %02x ", cpu.PC, get_indirect_x(memory[cpu.PC+1]));
 				addr = memory[cpu.PC+1];
 				ISC_IndirectX(addr);
 				cpu.PC += 2;
 				break;
 			case OPC_ISCINDY :
-				printf("%04x ISCindy %02x ", cpu.PC, get_indirect_y(memory[cpu.PC+1]));
+				printf("%04x ISBindy %02x ", cpu.PC, get_indirect_y(memory[cpu.PC+1]));
 				addr = memory[cpu.PC+1];
 				ISC_IndirectY(addr);
 				cpu.PC += 2;
@@ -1367,15 +1375,12 @@ int main(){
 				break;
 
 			default:
-				printf("%04x XXX %3x ", cpu.PC, memory[cpu.PC]);
+				printf("%04x NOP %3x ", cpu.PC, memory[cpu.PC]);
 				++cpu.PC;
 		}
 		i++;
 		printf("\n");
-		//msleep(100);
 	}
-	
-*/
 	fclose(file);
 	return EXIT_SUCCESS;
 }

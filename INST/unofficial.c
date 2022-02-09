@@ -73,34 +73,22 @@ void LAX_IndirectY(u8 addr){
 }
 
 void SAX_Absolute(u16 addr){
-	u8 temp = cpu.X;		
-	u8 acc = cpu.A;
-	AND(temp);
-	memory[addr] = cpu.A;	
-	cpu.A = acc;
-}
-void SAX_ZeroPage(u8 addr){
-	u8 temp = cpu.X;		
-	u8 acc = cpu.A;
-	AND(temp);
-	set_zero_page(addr, cpu.A);	
-	cpu.A = acc;
-}
-void SAX_ZeroPageY(u8 addr){
-	u8 temp = cpu.X;		
-	u8 acc = cpu.A;
-	AND(temp);
-	set_zero_page_y(addr, cpu.A);	
-	cpu.A = acc;
-}
-void SAX_IndirectX(u8 addr){
-	u8 temp = cpu.X;		
-	u8 acc = cpu.A;
-	AND(temp);
-	set_indirect_x(addr, cpu.A);	
-	cpu.A = acc;
+	memory[addr] = cpu.A & cpu.X;	
 }
 
+void SAX_ZeroPage(u8 addr){
+	set_zero_page(addr, cpu.A & cpu.X);	
+}
+
+void SAX_ZeroPageY(u8 addr){
+	set_zero_page_y(addr, cpu.A & cpu.X);	
+}
+
+void SAX_IndirectX(u8 addr){
+	set_indirect_x(addr, cpu.A & cpu.X);	
+}
+
+/*************** DCP  ****************/
 void DCP_ZeroPage(u8 addr){
 	DEC_ZeroPage(addr);
 	CMP_ZeroPage(addr);
@@ -126,16 +114,17 @@ void DCP_AbsoluteY(u16 addr){
 void DCP_IndirectX(u8 addr){
 	u8 val = get_indirect_x(addr);
 	val = DEC(val);
-	set_absolute_x(addr, val);
+	set_indirect_x(addr, val);
 	CMP_IndirectX(addr);
 }
 void DCP_IndirectY(u8 addr){
 	u8 val = get_indirect_y(addr);
 	val = DEC(val);
-	set_absolute_y(addr, val);
+	set_indirect_y(addr, val);
 	CMP_IndirectY(addr);
 }
 
+/*************** ISC ******************/
 void ISC_Absolute(u16 addr){
 	INC_Absolute(addr);
 	SBC_Absolute(addr);
@@ -152,7 +141,7 @@ void ISC_AbsoluteY(u16 addr){
 }
 void ISC_ZeroPage(u8 addr){
 	INC_ZeroPage(addr);
-	SBC_ZeroPageX(addr);
+	SBC_ZeroPage(addr);
 }
 void ISC_ZeroPageX(u8 addr){
 	INC_ZeroPageX(addr);
@@ -162,13 +151,13 @@ void ISC_IndirectX(u8 addr){
 	u8 val = get_indirect_x(addr);
 	val = INC(val);
 	set_indirect_x(addr, val);	
-	SBC_IndirectX(val);
+	SBC_IndirectX(addr);
 }
 void ISC_IndirectY(u8 addr){
 	u8 val = get_indirect_y(addr);
 	val = INC(val);
 	set_indirect_y(addr, val);	
-	SBC_IndirectY(val);
+	SBC_IndirectY(addr);
 }
 
 void RLA_Absolute(u16 addr){
@@ -242,6 +231,7 @@ void RRA_IndirectY(u8 addr){
 	ADC_IndirectY(addr);
 }
 
+/*************** SLO *******************/
 void SLO_Absolute(u16 addr){
 	ASL_Absolute(addr);
 	ORA_Absolute(addr);
@@ -254,7 +244,7 @@ void SLO_AbsoluteY(u16 addr){
 	u8 val = get_absolute_y(addr);
 	val = ASL(val);
 	set_absolute_y(addr, val);	
-	ORA_AbsoluteY(val);
+	ORA_AbsoluteY(addr);
 }
 void SLO_ZeroPage(u8 addr){
 	ASL_ZeroPage(addr);
@@ -267,15 +257,17 @@ void SLO_ZeroPageX(u8 addr){
 void SLO_IndirectX(u8 addr){
 	u8 val = get_indirect_x(addr);
 	val = ASL(val);
-	set_indirect_y(addr, val);	
+	set_indirect_x(addr, val);	
 	ORA_IndirectX(addr);
 }
 void SLO_IndirectY(u8 addr){
 	u8 val = get_indirect_y(addr);
 	val = ASL(val);
 	set_indirect_y(addr, val);
-	ORA_IndirectX(addr);
+	ORA_IndirectY(addr);
 }
+
+/***************** SRE ******************/
 
 void SRE_Absolute(u16 addr){
 	LSR_Absolute(addr);
