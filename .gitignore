@@ -1,3 +1,5 @@
 *.nes
 *.log
 *.swp
+output/
+

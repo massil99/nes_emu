@@ -1,11 +1,6 @@
 .PHONY: all 
 
-all: compile run
-
-compile:
+all:
 	@echo "Compilation..."
-	gcc -o parser *.c ../INST/*.c 
+	gcc -o ../output/parser *.c ../INST/*.c 
 
-run: 
-	@echo "Running..."
-	@./parser

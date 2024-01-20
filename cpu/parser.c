@@ -49,8 +49,8 @@ int msleep(long msec){
     return res;
 } 
 
-int main(){
-	char *path = "mario.nes";
+int main(int argc, char *argv[]){
+	char *path = argv[1];
 	FILE* file = fopen(path, "rb");
 	INES_Header header = {0, 0, 0, 0, 0, 0, 0, 0};
 	
