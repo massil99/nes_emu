@@ -1,7 +1,7 @@
 #ifndef PPU_H_
 #define PPU_H_
 
-#include "../INST/custom_types.h"
+#include "../instructions/custom_types.h"
 
 #define PPU_MEMORY_SIZE 16384
 

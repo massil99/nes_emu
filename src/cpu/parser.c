@@ -1,11 +1,11 @@
 #include "stdlib.h"
 #include "stdio.h"
 #include "stdint.h"
-#include "../INST/bit_manipulation.h"
-#include "../INST/memory.h"
-#include "../INST/instructions.h"
-#include "../INST/custom_types.h"
-#include "../INST/add_mode.h"
+#include "../instructions/bit_manipulation.h"
+#include "../instructions/memory.h"
+#include "../instructions/instructions.h"
+#include "../instructions/custom_types.h"
+#include "../instructions/add_mode.h"
 #include "../ppu/ppu.h"
 
 #include "time.h"
@@ -50,6 +50,7 @@ int msleep(long msec){
 } 
 
 int main(int argc, char *argv[]){
+	printf("############## Emulator start up ##############\n");
 	char *path = argv[1];
 	FILE* file = fopen(path, "rb");
 	INES_Header header = {0, 0, 0, 0, 0, 0, 0, 0};
@@ -71,6 +72,7 @@ int main(int argc, char *argv[]){
 	fread(&buf, sizeof(u8), 1, file);
 	header.signature |= buf;
 
+
 	// Checking file signature
 	if(header.signature != INES_FILE_SIGNATURE){
 		fprintf(stderr, "[ERROR]: %s not a NES file\n", path);	
@@ -85,6 +87,9 @@ int main(int argc, char *argv[]){
 	fread(&header.FLAGS8,	sizeof(u8), 1, file);
 	fread(&header.FLAGS9,	sizeof(u8), 1, file);
 	fread(&header.FLAGS10,  sizeof(u8), 1, file);
+
+
+	printf("prg_size=%d\n", header.PRG_SIZE);
 
 	// Skiping blank bytes
 	for(int i = 0; i < 5; i++)
@@ -109,7 +114,7 @@ int main(int argc, char *argv[]){
 	} else {
 		// Double paged rom
 		for(int i = 0; i < header.PRG_SIZE*16384; i++){
-			fread(&buf, sizeof(u8), 1, file);
+			// printf("read %ld bits (%d/%d)\n", fread(&buf, sizeof(u8), 1, file), i, header.PRG_SIZE*16384);
 			memory[i + PRG_ROM_START_LOWER_BANK] = buf;
 		}	
 	} 
@@ -1382,5 +1387,7 @@ int main(int argc, char *argv[]){
 		printf("\n");
 	}
 	fclose(file);
+
+	printf("############## Emulator shutdown ##############");
 	return EXIT_SUCCESS;
 }
