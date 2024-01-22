@@ -29,13 +29,17 @@ void BIT(u8 m){
 	SET_STATUS_OVERFLOW(cpu, U8_BIT6(m));
 }
 
-void BIT_ZeroPage(u8 addr){
+size_t BIT_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	BIT(mem);
+
+	return 3;
 }
 
-void BIT_Absolute(u16 addr){
+size_t BIT_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	BIT(mem);
+
+	return 4;
 }

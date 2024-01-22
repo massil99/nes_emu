@@ -9,7 +9,7 @@
 extern CPU_registers cpu;
 extern u8 memory[MEMORY_SIZE];
 
-void BRK(){
+size_t BRK(){
 	push_word(cpu.PC);
 	PHP();
 	cpu.PC = 0x0000;
@@ -17,16 +17,20 @@ void BRK(){
 	cpu.PC |= memory[0xffff] << 8;
 	
 	SET_STATUS_BREAK(cpu, 1);
+
+	return 7;
 }
 
-void RTS(){
+size_t RTS(){
 	u8 lo = pull();
 	u8 hi = pull();
 	
 	cpu.PC = (hi<<8) + lo;
+
+	return 6;	
 }
 
-void RTI(){
+size_t RTI(){
 	u8 status = pull();
 	cpu.P = 0x30 & cpu.P;
 	cpu.P |= (status & 0xcf);
@@ -35,4 +39,6 @@ void RTI(){
 	u8 hi = pull();
 	
 	cpu.PC = (hi<<8) + lo;
+
+	return 6;	
 }

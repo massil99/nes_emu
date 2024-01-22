@@ -28,32 +28,42 @@ u8 ROL(u8 m){
 	return res;
 }
 
-void ROL_Accumulator(){
+size_t ROL_Accumulator(){
 	cpu.A = ROL(cpu.A);
+
+	return 2; 
 }
 
-void ROL_ZeroPage(u8 addr){
+size_t ROL_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	u8 res = ROL(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void ROL_ZeroPageX(u8 addr){
+size_t ROL_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = ROL(mem);
 	set_zero_page_x(addr, res);
+
+	return 6;
 }
 
-void ROL_Absolute(u16 addr){
+size_t ROL_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = ROL(mem);
 	memory[addr] = res;
+
+	return 6;
 }
 
-void ROL_AbsoluteX(u16 addr){
+size_t ROL_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = ROL(mem);
 	set_absolute_x(addr, res);
+
+	return 7;
 }
 

@@ -1,6 +1,6 @@
 CC=gcc
 FLAGS=-g
-SRC=src/cpu/*.c src/instructions/*.c
+SRC=src/cpu/*.c src/instructions/*.c src/utils/*.c
 OUTPUT=./output
 EXEC=emu
 

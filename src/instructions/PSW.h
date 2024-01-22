@@ -4,17 +4,17 @@
 #include "cpu.h"
 #include "stack.h"
 
-void PHA();
-void PLA();
-void PHP();
-void PLP();
-void SEC();
-void SED();
-void SEI();
-void SEV();
-void CLC();
-void CLD();
-void CLI();
-void CLV();
+size_t PHA();
+size_t PLA();
+size_t PHP();
+size_t PLP();
+size_t SEC();
+size_t SED();
+size_t SEI();
+size_t SEV();
+size_t CLC();
+size_t CLD();
+size_t CLI();
+size_t CLV();
 
 #endif //PSW_H_

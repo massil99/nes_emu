@@ -4,17 +4,17 @@
 #include "custom_types.h"
 #include <stdbool.h>
 
-bool BCC(s8 offset);
-bool BCS(s8 offset);
-bool BEQ(s8 offset);
-bool BNE(s8 offset);
-bool BMI(s8 offset);
-bool BPL(s8 offset);
-bool BVC(s8 offset);
-bool BVS(s8 offset);
-void JMP(u16 m);
+size_t BCC(s8 offset);
+size_t BCS(s8 offset);
+size_t BEQ(s8 offset);
+size_t BNE(s8 offset);
+size_t BMI(s8 offset);
+size_t BPL(s8 offset);
+size_t BVC(s8 offset);
+size_t BVS(s8 offset);
+size_t JMP(u16 m);
 #define JMP_Absolute(addr) JMP(addr)
-void JMP_Indirect(u16 addr);
-void JSR(u16 addr);
+size_t JMP_Indirect(u16 addr);
+size_t JSR(u16 addr);
 
 #endif //BRANCHING_H_

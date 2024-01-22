@@ -4,10 +4,12 @@
 #include "cpu.h"
 #include "memory.h"
 
+#include "../utils/utils.h"
+
 extern u8 memory[MEMORY_SIZE];
 extern CPU_registers cpu;
 
-void ORA(u8 m){
+size_t ORA(u8 m){
 	u8 temp = 0x00;	
 	temp |= (cpu.A & 0x80) | (m & 0x80);
 	temp |= (cpu.A & 0x40) | (m & 0x40);
@@ -26,42 +28,68 @@ void ORA(u8 m){
 	}else{
 		SET_STATUS_ZERO(cpu, 0);	
 	}
+
+
+	return 2;
 }
 
 #define ORA_Immediate(mem) OR(mem)
 
-void ORA_ZeroPage(u8 addr){
+size_t ORA_ZeroPage(u8 addr){
 	u8 m = get_zero_page(addr);
 	ORA(m);
+
+	return 3;
 }
 
-void ORA_ZeroPageX(u8 addr){
+size_t ORA_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	ORA(mem);
+
+	return 4;
 }
 
-void ORA_Absolute(u16 addr){
+size_t ORA_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	ORA(mem);
+
+	return 4;
 }
 
-void ORA_AbsoluteX(u16 addr){
+size_t ORA_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	ORA(mem);
+
+	if(page_crossed(addr, mem))
+		return 5;
+	else
+		return 4;
 }
 
-void ORA_AbsoluteY(u16 addr){
+size_t ORA_AbsoluteY(u16 addr){
 	u8 mem = get_absolute_y(addr);
 	ORA(mem);
+
+	if(page_crossed(addr, mem))
+		return 5;
+	else
+		return 4;
 }
 
-void ORA_IndirectX(u8 addr){
+size_t ORA_IndirectX(u8 addr){
 	u8 mem = get_indirect_x(addr);
 	ORA(mem);
+
+	return 6;
 }
 
-void ORA_IndirectY(u8 addr){
+size_t ORA_IndirectY(u8 addr){
 	u8 mem = get_indirect_y(addr);
 	ORA(mem);
+
+	if(page_crossed(addr, mem))
+		return 6;
+	else
+		return 5;
 }

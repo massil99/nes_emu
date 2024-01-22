@@ -18,34 +18,42 @@ u8 DEC(u8 mem){
 	return res;
 }
 
-void DEC_ZeroPage(u8 addr){
+size_t DEC_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	u8 res = DEC(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void DEC_ZeroPageX(u8 addr){
+size_t DEC_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = DEC(mem);
 	set_zero_page_x(addr, res);
+
+	return 6;
 }
 
-void DEC_Absolute(u16 addr){
+size_t DEC_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = DEC(mem);
 	memory[addr] = res;
+
+	return 6;
 }
 
-void DEC_AbsoluteX(u16 addr){
+size_t DEC_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = DEC(mem);
 	set_absolute_x(addr, res);
+
+	return 7;
 }
 
 /***********************************************************************/
 /***********************    DERegister    ******************************/
-void DEX(){
+size_t DEX(){
 	--cpu.X;
 
 	if(cpu.X == 0x00){
@@ -54,9 +62,11 @@ void DEX(){
 		SET_STATUS_ZERO(cpu, 0);
 	}
 	SET_STATUS_NEGATIVE(cpu, U8_BIT7(cpu.X));
+
+	return 2;
 }
 
-void DEY(){
+size_t DEY(){
 	--cpu.Y;
 
 	if(cpu.Y == 0x00){
@@ -65,6 +75,8 @@ void DEY(){
 		SET_STATUS_ZERO(cpu, 0);
 	}
 	SET_STATUS_NEGATIVE(cpu, U8_BIT7(cpu.Y));
+
+	return 2;
 }
 
 /***********************************************************************/
@@ -81,36 +93,44 @@ u8 INC(u8 mem){
 	return res;
 }
 
-void INC_ZeroPage(u8 addr){
+size_t INC_ZeroPage(u8 addr){
 	printf("pz %02x ", addr);
 	u8 mem = get_zero_page(addr);
 	u8 res = INC(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void INC_ZeroPageX(u8 addr){
+size_t INC_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = INC(mem);
 	set_zero_page_x(addr, res);
+
+	return 6;
 }
 
-void INC_Absolute(u16 addr){
+size_t INC_Absolute(u16 addr){
 	printf("abs %04x ", addr);
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = INC(mem);
 	memory[addr] = res;
+
+	return 6;
 }
 
-void INC_AbsoluteX(u16 addr){
+size_t INC_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = INC(mem);
 	set_absolute_x(addr, res);
+
+	return 7;
 }
 
 /***********************************************************************/
-/***********************    INCRegister    ******************************/
-void INX(){
+/**********************    INCRegister    ******************************/
+size_t INX(){
 	++cpu.X;
 
 	if(cpu.X == 0x00){
@@ -119,9 +139,11 @@ void INX(){
 		SET_STATUS_ZERO(cpu, 0);
 	}
 	SET_STATUS_NEGATIVE(cpu, U8_BIT7(cpu.X));
+
+	return 2;
 }
 
-void INY(){
+size_t INY(){
 	++cpu.Y;
 
 	if(cpu.Y == 0x00){
@@ -130,4 +152,6 @@ void INY(){
 		SET_STATUS_ZERO(cpu, 0);
 	}
 	SET_STATUS_NEGATIVE(cpu, U8_BIT7(cpu.Y));
+
+	return 2;
 }

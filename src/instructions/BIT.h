@@ -4,6 +4,6 @@
 #include "custom_types.h"
 
 void BIT(u8 m);
-void BIT_ZeroPage(u8 addr);
-void BIT_Absolute(u16 addr);
+size_t BIT_ZeroPage(u8 addr);
+size_t BIT_Absolute(u16 addr);
 #endif //BIT_H_

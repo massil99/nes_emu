@@ -22,31 +22,41 @@ u8 LSR(u8 m){
 	return res;
 }
 
-void LSR_Accumulator(){
+size_t LSR_Accumulator(){
 	cpu.A = LSR(cpu.A);
+
+	return 2;
 }
 
-void LSR_ZeroPage(u8 addr){
+size_t LSR_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	u8 res = LSR(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void LSR_ZeroPageX(u8 addr){
+size_t LSR_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = LSR(mem);
 	set_zero_page_x(addr, res);
+
+	return 6;
 }
 
-void LSR_Absolute(u16 addr){
+size_t LSR_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = LSR(mem);
 	memory[addr] = res;
+
+	return 6;
 }
 
-void LSR_AbsoluteX(u16 addr){
+size_t LSR_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = LSR(mem);
 	set_absolute_x(addr, res);
+	
+	return 7;
 }

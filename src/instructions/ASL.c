@@ -5,10 +5,12 @@
 #include "cpu.h"
 #include "memory.h"
 
+#include "../utils/utils.h"
+
 extern CPU_registers cpu;
 extern u8 memory[MEMORY_SIZE];
 
-void ASL_Accumulator(){
+size_t ASL_Accumulator(){
 	SET_STATUS_CARRY(cpu, U8_BIT7(cpu.A));
 	
 	cpu.A <<= 1;
@@ -20,6 +22,8 @@ void ASL_Accumulator(){
 	}
 
 	SET_STATUS_NEGATIVE(cpu, U8_BIT7(cpu.A));
+
+	return 2;
 }
 
 u8 ASL(u8 mem){
@@ -37,27 +41,35 @@ u8 ASL(u8 mem){
 	return res;
 }
 
-void ASL_ZeroPage(u8 addr){
+size_t ASL_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	u8 res = ASL(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void ASL_ZeroPageX(u8 addr){
+size_t ASL_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = ASL(mem);
 	set_zero_page_x(addr, res);
+
+	return 6;
 }
 
-void ASL_Absolute(u16 addr){
+size_t ASL_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = ASL(mem);
 	memory[addr] = res;	
+
+	return 6;
 }
 
-void ASL_AbsoluteX(u16 addr){
+size_t ASL_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = ASL(mem);
 	set_absolute_x(addr, res);
+
+	return 7;
 }

@@ -27,31 +27,41 @@ u8 ROR(u8 m){
 	return res;
 }
 
-void ROR_Accumulator(){
+size_t ROR_Accumulator(){
 	cpu.A = ROR(cpu.A);
+
+	return 2;
 }
 
-void ROR_ZeroPage(u8 addr){
+size_t ROR_ZeroPage(u8 addr){
 	u8 mem = get_zero_page(addr);
 	u8 res = ROR(mem);
 	set_zero_page(addr, res);
+
+	return 5;
 }
 
-void ROR_ZeroPageX(u8 addr){
+size_t ROR_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	u8 res = ROR(mem);
 	set_zero_page_x(addr, res);
+	
+	return 6;
 }
 
-void ROR_Absolute(u16 addr){
+size_t ROR_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	u8 res = ROR(mem);
 	memory[addr] = res;
+	
+	return 6;
 }
 
-void ROR_AbsoluteX(u16 addr){
+size_t ROR_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	u8 res = ROR(mem);
 	set_absolute_x(addr, res);
+
+	return 7;
 }

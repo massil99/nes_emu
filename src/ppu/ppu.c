@@ -9,6 +9,13 @@ u8 ppu_memory[PPU_MEMORY_SIZE];
 u32 OAM[OAM_SIZE];
 extern u8 memory[MEMORY_SIZE];
 
+void power_up_ppu(){
+	set_PPUCTRL(0);
+	set_PPUMASK(0);
+	set_PPUSTATUS(0xA0);
+	//set_OAMADDR(0);
+}
+
 void set_PPUCTRL(u8 flag){
 	for(u16 i = R_PPUCTRL; i <= PPU_REGISTERS_BOUNDERY; i+=8){
 		memory[i] = flag;

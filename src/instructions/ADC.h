@@ -3,14 +3,14 @@
 
 #include "custom_types.h"
 
-void ADC(u8 m);
+size_t ADC(u8 m);
 #define ADC_Immediate(mem) ADC(mem) 
-void ADC_ZeroPage(u8 addr);
-void ADC_ZeroPageX(u8 addr);
-void ADC_Absolute(u16 addr);
-void ADC_AbsoluteX(u16 addr);
-void ADC_AbsoluteY(u16 addr);
-void ADC_IndirectX(u8 addr);
-void ADC_IndirectY(u8 addr);
+size_t ADC_ZeroPage(u8 addr);
+size_t ADC_ZeroPageX(u8 addr);
+size_t ADC_Absolute(u16 addr);
+size_t ADC_AbsoluteX(u16 addr);
+size_t ADC_AbsoluteY(u16 addr);
+size_t ADC_IndirectX(u8 addr);
+size_t ADC_IndirectY(u8 addr);
 
 #endif //ADC_H_

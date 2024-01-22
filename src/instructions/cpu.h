@@ -59,45 +59,46 @@ typedef struct {
 	u16 PC;
 }CPU_registers;
 
-void STX_ZeroPage(u8 addr);
-void STX_ZeroPageY(u8 addr);
-void STX_Absolute(u16 addr);
-void STY_ZeroPage(u8 addr);
-void STY_ZeroPageX(u8 addr);
-void STY_Absolute(u16 addr);
-void STA_ZeroPage(u8 addr);
-void STA_ZeroPageX(u8 addr);
-void STA_Absolute(u16 addr);
-void STA_AbsoluteX(u16 addr);
-void STA_AbsoluteY(u16 addr);
-void STA_IndirectX(u8 addr);
-void STA_IndirectY(u8 addr);
-void TAX();
-void TAY();
-void TSX();
-void TXA();
-void TYA();
-void TXS();
-void LDA(u8 m);
+size_t STX_ZeroPage(u8 addr);
+size_t STX_ZeroPageY(u8 addr);
+size_t STX_Absolute(u16 addr);
+size_t STY_ZeroPage(u8 addr);
+size_t STY_ZeroPageX(u8 addr);
+size_t STY_Absolute(u16 addr);
+size_t STA_ZeroPage(u8 addr);
+size_t STA_ZeroPageX(u8 addr);
+size_t STA_Absolute(u16 addr);
+size_t STA_AbsoluteX(u16 addr);
+size_t STA_AbsoluteY(u16 addr);
+size_t STA_IndirectX(u8 addr);
+size_t STA_IndirectY(u8 addr);
+size_t TAX();
+size_t TAY();
+size_t TSX();
+size_t TXA();
+size_t TYA();
+size_t TXS();
+
+size_t LDA(u8 m);
 #define LDA_Immediate(mem) LDA(mem)
-void LDA_ZeroPage(u8 addr);
-void LDA_ZeroPageX(u8 addr);
-void LDA_Absolute(u16 addr);
-void LDA_AbsoluteX(u16 addr);
-void LDA_AbsoluteY(u16 addr);
-void LDA_IndirectX(u8 addr);
-void LDA_IndirectY(u8 addr);
-void LDX(u8 m);
+size_t LDA_ZeroPage(u8 addr);
+size_t LDA_ZeroPageX(u8 addr);
+size_t LDA_Absolute(u16 addr);
+size_t LDA_AbsoluteX(u16 addr);
+size_t LDA_AbsoluteY(u16 addr);
+size_t LDA_IndirectX(u8 addr);
+size_t LDA_IndirectY(u8 addr);
+size_t LDX(u8 m);
 #define LDX_Immediate(mem) LDX(mem)
-void LDX_ZeroPage(u8 addr);
-void LDX_ZeroPageY(u8 addr);
-void LDX_Absolute(u16 addr);
-void LDX_AbsoluteY(u16 addr);
-void LDY(u8 m);
+size_t LDX_ZeroPage(u8 addr);
+size_t LDX_ZeroPageY(u8 addr);
+size_t LDX_Absolute(u16 addr);
+size_t LDX_AbsoluteY(u16 addr);
+size_t LDY(u8 m);
 #define LDY_Immediate(mem) LDY(mem)
-void LDY_ZeroPage(u8 addr);
-void LDY_ZeroPageX(u8 addr);
-void LDY_Absolute(u16 addr);
-void LDY_AbsoluteX(u16 addr);
+size_t LDY_ZeroPage(u8 addr);
+size_t LDY_ZeroPageX(u8 addr);
+size_t LDY_Absolute(u16 addr);
+size_t LDY_AbsoluteX(u16 addr);
 
 #endif //_CPU_H

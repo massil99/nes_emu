@@ -3,11 +3,12 @@
 #include "stack.h"
 #include "cpu.h"
 #include "memory.h"
+#include "../utils/utils.h"
 
 extern CPU_registers cpu;
 extern u8 memory[MEMORY_SIZE];
 
-void AND(u8 m){
+size_t AND(u8 m){
 	u8 temp = 0x00;	
 	temp |= (cpu.A & 0x80) & (m & 0x80);
 	temp |= (cpu.A & 0x40) & (m & 0x40);
@@ -26,43 +27,68 @@ void AND(u8 m){
 	}else {
 		SET_STATUS_ZERO(cpu, 0);	
 	}
+
+	return 2;
 }
 
 #define AND_Immediate(mem) AND(mem)
 
-void AND_ZeroPage(u8 addr){
+size_t AND_ZeroPage(u8 addr){
 	u8 m = get_zero_page(addr);
 	AND(m);
+
+	return 3;
 }
 
-void AND_ZeroPageX(u8 addr){
+size_t AND_ZeroPageX(u8 addr){
 	u8 mem = get_zero_page_x(addr);
 	AND(mem);
+
+	return 4;
 }
 
-void AND_Absolute(u16 addr){
+size_t AND_Absolute(u16 addr){
 	assert(addr < MEMORY_SIZE);
 	u8 mem = memory[addr];
 	AND(mem);
+
+	return 4;
 }
 
-void AND_AbsoluteX(u16 addr){
+size_t AND_AbsoluteX(u16 addr){
 	u8 mem = get_absolute_x(addr);
 	AND(mem);
+
+	if(page_crossed(addr, mem))
+		return 5;
+	else
+		return 4;
 }
 
-void AND_AbsoluteY(u16 addr){
+size_t AND_AbsoluteY(u16 addr){
 	u8 mem = get_absolute_y(addr);
 	AND(mem);
+
+	if(page_crossed(addr, mem))
+		return 5;
+	else
+		return 4;
 }
 
-void AND_IndirectX(u8 addr){
+size_t AND_IndirectX(u8 addr){
 	u8 mem = get_indirect_x(addr);
 	AND(mem);
+
+	return 6;
 }
 
-void AND_IndirectY(u8 addr){
+size_t AND_IndirectY(u8 addr){
 	u8 mem = get_indirect_y(addr);
 	AND(mem);
+
+	if(page_crossed(addr, mem))
+		return 6;
+	else
+		return 5;
 }
 

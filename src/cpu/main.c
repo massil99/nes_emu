@@ -15,6 +15,8 @@
 #define PRG_ROM_START_UPPER_BANK 0xc000
 #define INES_FILE_SIGNATURE 0x4e45531a
 
+#define TICK_LENGTH 50000000
+
 typedef struct {
 	u32 signature;;
 	u8 PRG_SIZE;
@@ -48,6 +50,25 @@ int msleep(long msec){
 
     return res;
 } 
+
+int nsleep(long nsec){
+    struct timespec ts;
+    int res;
+
+    if (nsec < 0){
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = nsec / 1000000000;
+    ts.tv_nsec = (nsec % 1000000000);
+
+    do {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
+}
 
 int main(int argc, char *argv[]){
 	printf("############## Emulator start up ##############\n");
@@ -141,9 +162,16 @@ int main(int argc, char *argv[]){
 
 	
 	u16 addr = 0;
-	cpu.PC = memory[0xfffc] + (memory[0xfffd] << 8);
-	int i = 0;
-	while(i < 8991){
+	// cpu.PC = memory[0xfffc] + (memory[0xfffd] << 8); // at reset ????
+ 	cpu.PC = 0xc000;
+	size_t cycles = 0;
+	long ticks = 0;
+	size_t i = 0;
+
+	while(1){
+		if(i >= 8991)
+			break;
+
 		printf("A:(%02x) ", cpu.A);
 		// PRINT_BYTE(cpu.A);
 		 printf("X:(%02x) ", cpu.X);
@@ -157,544 +185,543 @@ int main(int argc, char *argv[]){
 		switch(memory[cpu.PC]){
 			case OPC_ADCI:
 				printf("%04x ADC %x ", cpu.PC, memory[cpu.PC+1]);
-				ADC_Immediate(memory[cpu.PC+1]);				
+				cycles = ADC_Immediate(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ADCZP:
 				printf("%04x ADC %x", cpu.PC, memory[cpu.PC+1]);
-				ADC_ZeroPage(memory[cpu.PC+1]);				
+				cycles = ADC_ZeroPage(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ADCZPX:
 				printf("%04x ADC %x", cpu.PC, memory[cpu.PC+1]);
-				ADC_ZeroPageX(memory[cpu.PC+1]);				
+				cycles = ADC_ZeroPageX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ADCA:
 				printf("%04x ADC %x", cpu.PC, memory[cpu.PC+1]);
 				addr =  memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ADC_Absolute(addr);				
+				cycles = ADC_Absolute(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ADCAX:
 				printf("%04x ADC %x", cpu.PC, memory[cpu.PC+1]);
 				addr =  memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ADC_AbsoluteX(addr);				
+				cycles = ADC_AbsoluteX(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ADCAY:
 				addr =  memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x ADC %x", cpu.PC, addr);
-				ADC_AbsoluteY(addr);				
+				cycles = ADC_AbsoluteY(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ADCINDX:
 				printf("%04x ADC %x", cpu.PC, addr);
-				ADC_IndirectX(memory[cpu.PC+1]);				
+				cycles = ADC_IndirectX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ADCINDY:
 				printf("%04x ADC %x", cpu.PC, memory[cpu.PC+1]);
-				ADC_IndirectY(memory[cpu.PC+1]);				
+				cycles = ADC_IndirectY(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 
 			case OPC_ANDI:
 				printf("%04x AND ", cpu.PC);
-				AND_Immediate(memory[cpu.PC+1]);				
+				cycles = AND_Immediate(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
-
 			case OPC_ANDZP:
 				printf("%04x AND ", cpu.PC);
-				AND_ZeroPage(memory[cpu.PC+1]);				
+				cycles = AND_ZeroPage(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDZPX:
 				printf("%04x AND ", cpu.PC);
-				AND_ZeroPageX(memory[cpu.PC+1]);				
+				cycles = AND_ZeroPageX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDA:
 				printf("%04x AND ", cpu.PC);
 				addr =  memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				AND_Absolute(addr);				
+				cycles = AND_Absolute(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDAX:
 				printf("%04x AND ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				AND_AbsoluteX(addr);				
+				cycles = AND_AbsoluteX(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDAY:
 				printf("%04x AND ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				AND_AbsoluteY(addr);				
+				cycles = AND_AbsoluteY(addr);				
 				cpu.PC += 3;
 				break;
 			case OPC_ANDINDX:
 				printf("%04x AND ", cpu.PC);
-				AND_IndirectX(memory[cpu.PC+1]);				
+				cycles = AND_IndirectX(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 				break;
 			case OPC_ANDINDY:
 				printf("%04x AND ", cpu.PC);
-				AND_IndirectY(memory[cpu.PC+1]);				
+				cycles = AND_IndirectY(memory[cpu.PC+1]);				
 				cpu.PC += 2;
 
 				break;
 			case OPC_ASLACC:
 				printf("%04x ASL ", cpu.PC);
-				ASL_Accumulator();
+				cycles = ASL_Accumulator();
 				cpu.PC += 1;
 				break;
 			case OPC_ASLZP:
 				printf("%04x ASL ", cpu.PC);
-				ASL_ZeroPage(memory[cpu.PC+1]);
+				cycles = ASL_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ASLZPX:
 				printf("%04x ASL ", cpu.PC);
-				ASL_ZeroPageX(memory[cpu.PC+1]);
+				cycles = ASL_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ASLA:
 				printf("%04x ASL ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ASL_Absolute(addr);
+				cycles = ASL_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ASLAX:
 				printf("%04x ASL ", cpu.PC);
-				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
+				cycles = addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				ASL_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_BCCR:
 				printf("%04x BCC %x ", cpu.PC, memory[cpu.PC+1]);
-				BCC(memory[cpu.PC+1]);
+				cycles = BCC(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BCSR:
 				printf("%04x BCS %2x ", cpu.PC, memory[cpu.PC+1]);
-				BCS(memory[cpu.PC+1]);
+				cycles = BCS(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BEQR:
 				printf("%04x BEQ ", cpu.PC);
-				BEQ(memory[cpu.PC+1]);
+				cycles = BEQ(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BITZP:
 				printf("%04x BITzp ", cpu.PC);
-				BIT_ZeroPage(memory[cpu.PC+1]);
+				cycles = BIT_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 					   break;
 			case OPC_BITA:
 				printf("%04x BITa ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				BIT_Absolute(addr);
+				cycles = BIT_Absolute(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_BMIR: 
 				printf("%04x BMI ", cpu.PC);
-				BMI(memory[cpu.PC+1]);
+				cycles = BMI(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BNER:
 				printf("%04x BNE ", cpu.PC);
-				BNE(memory[cpu.PC+1]);
+				cycles = BNE(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BPLR:
 				printf("%04x BPL %x", cpu.PC, memory[cpu.PC+1]);
-				BPL(memory[cpu.PC+1]);
+				cycles = BPL(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_BRKIMP:
 				printf("%04x BRK ", cpu.PC);
-				BRK();
+				cycles = BRK();
 				break;
 
 			case OPC_BVCR:
 				printf("%04x BVC ", cpu.PC);
 				s8 offset = (s8)  memory[cpu.PC+1];
-				BVC(offset); 
+				cycles = BVC(offset); 
 				cpu.PC += 2;
 				break;
 
 			case OPC_BVSR:
 				printf("%04x bvs ", cpu.PC);
-				BVS(memory[cpu.PC+1]);
+				cycles = BVS(memory[cpu.PC+1]);
 				cpu.PC +=  2;
 				break;
 
 			case OPC_CLCIMP:
 				printf("%04x clc ", cpu.PC);
-				CLC();
+				cycles = CLC();
 				cpu.PC += 1;
 				break;
 
 			case OPC_CLDIMP:
 				printf("%04x cld ", cpu.PC);
-				CLD();
+				cycles = CLD();
 				cpu.PC += 1;
 				break;
 
 			case OPC_CLIIMP:
 				printf("%04x cli ", cpu.PC);
-				CLI();
+				cycles = CLI();
 				cpu.PC += 1;
 				break;
 
 			case OPC_CLVIMP:
 				printf("%04x clv ", cpu.PC);
-				CLV();
+				cycles = CLV();
 				cpu.PC += 1;
 				break;
 
 			case OPC_CMPI:	
 				printf("%04x CMP %02x", cpu.PC, memory[cpu.PC+1]);
-				CMP_Immediate(memory[cpu.PC+1]);
+				cycles = CMP_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CMPZP:	
 				printf("%04x CMP %02x", cpu.PC, get_zero_page(memory[cpu.PC+1]));
-				CMP_ZeroPage(memory[cpu.PC+1]);
+				cycles = CMP_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CMPZPX:	
 				printf("%04x CMP %02x", cpu.PC, get_absolute_x(memory[cpu.PC+1]));
-				CMP_ZeroPageX(memory[cpu.PC+1]);
+				cycles = CMP_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CMPA:	
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x CMP %02x", cpu.PC, memory[addr]);
-				CMP_Absolute(addr);
+				cycles = CMP_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_CMPAX:	
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x CMP %02x", cpu.PC, memory[addr]);
-				CMP_AbsoluteX(addr);
+				cycles = CMP_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_CMPAY:	
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x CMP %02x", cpu.PC,  memory[addr]);
-				CMP_AbsoluteY(addr);
+				cycles = CMP_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_CMPINDX:	
 				printf("%04x CMP %02x", cpu.PC, get_indirect_x(memory[cpu.PC+1]));
-				CMP_IndirectX(memory[cpu.PC+1]);
+				cycles = CMP_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CMPINDY:	
 				printf("%04x CMP %02x", cpu.PC, get_indirect_y(memory[cpu.PC+1]));
-				CMP_IndirectY(memory[cpu.PC+1]);
+				cycles = CMP_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 	
 			case OPC_CPXI:	
 				printf("%04x cpx ", cpu.PC);
-				CPX_Immediate(memory[cpu.PC+1]);
+				cycles = CPX_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPXZP:	
 				printf("%04x cpx ", cpu.PC);
-				CPX_ZeroPage(memory[cpu.PC+1]);
+				cycles = CPX_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPXA:	
 				printf("%04x cpx ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				CPX_Absolute(addr);
+				cycles = CPX_Absolute(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_CPYI:	
 				printf("%04x cpy ", cpu.PC);
-				CPY_Immediate(memory[cpu.PC+1]);
+				cycles = CPY_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPYZP:	
 				printf("%04x cpy ", cpu.PC);
-				CPY_ZeroPage(memory[cpu.PC+1]);
+				cycles = CPY_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_CPYA:	
 				printf("%04x cpy ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				CPY_Absolute(addr);
+				cycles = CPY_Absolute(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_DECZP:
 				printf("%04x dec ", cpu.PC);
-				DEC_ZeroPage(memory[cpu.PC+1]);
+				cycles = DEC_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_DECZPX:
 				printf("%04x dec ", cpu.PC);
-				DEC_ZeroPageX(memory[cpu.PC+1]);
+				cycles = DEC_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_DECA:	
 				printf("%04x dec ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				DEC_Absolute(addr);
+				cycles = DEC_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_DECAX:	
 				printf("%04x dec ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				DEC_AbsoluteX(addr);
+				cycles = DEC_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_DEXIMP:
 				printf("%04x dex ", cpu.PC);
-				DEX();
+				cycles = DEX();
 				cpu.PC += 1;
 				break;
 
 			case OPC_DEYIMP:
 				printf("%04x dey ", cpu.PC);
-				DEY();
+				cycles = DEY();
 				cpu.PC += 1;
 				break;
 
  			case OPC_EORI:
 				printf("%04x EOR ", cpu.PC);
-				EOR_Immediate(memory[cpu.PC+1]);
+				cycles = EOR_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORZP:
 				printf("%04x EOR ", cpu.PC);
-				EOR_ZeroPage(memory[cpu.PC+1]);
+				cycles = EOR_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORZPX: 
 				printf("%04x EOR ", cpu.PC);
-				EOR_ZeroPageX(memory[cpu.PC+1]);
+				cycles = EOR_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORA:
 				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				EOR_Absolute(addr);
+				cycles = EOR_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORAX:
 				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				EOR_AbsoluteX(addr);
+				cycles = EOR_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORAY:
 				printf("%04x EOR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				EOR_AbsoluteY(addr);
+				cycles = EOR_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_EORINDX:
 				printf("%04x EOR ", cpu.PC);
-				EOR_IndirectX(memory[cpu.PC+1]);
+				cycles = EOR_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_EORINDY:
 				printf("%04x EOR ", cpu.PC);
-				EOR_IndirectY(memory[cpu.PC+1]);
+				cycles = EOR_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 
 			case OPC_INCZP:
 				printf("%04x inc ", cpu.PC);
-				INC_ZeroPage(memory[cpu.PC+1]);
+				cycles = INC_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_INCZPX:
 				printf("%04x inc ", cpu.PC);
-				INC_ZeroPageX(memory[cpu.PC+1]);
+				cycles = INC_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_INCA:
 				printf("%04x inc ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				INC_Absolute(addr);
+				cycles = INC_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_INCAX:
 				printf("%04x inc ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				INC_AbsoluteX(addr);
+				cycles = INC_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_INXIMP:
 				printf("%04x inx ", cpu.PC);
-				INX();
+				cycles = INX();
 				cpu.PC += 1;
 				break;
 			case OPC_INYIMP:
 				printf("%04x iny ", cpu.PC);
-				INY();
+				cycles = INY();
 				cpu.PC += 1;
 				break;
 
 			case OPC_JMPA:
 				printf("%04x jmp ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				JMP_Absolute(addr);
+				cycles = JMP_Absolute(addr);
 				break;
 			case OPC_JMPIND:
 				printf("%04x jmp ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				JMP_Indirect(addr);
+				cycles = JMP_Indirect(addr);
 				break;
 
 			case OPC_JSRA:
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x jsr %04x | %02x %02x %02x", cpu.PC, addr, memory[cpu.PC], memory[cpu.PC+1],memory[cpu.PC+2]);
-				JSR(addr);
+				cycles = JSR(addr);
 				break;
 
  			case OPC_LDAI:
 				printf("%04x LDAi %x ", cpu.PC, memory[cpu.PC+1]);
-				LDA_Immediate(memory[cpu.PC+1]);
+				cycles = LDA_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDAZP:
 				printf("%04x LDAzp %x ", cpu.PC, get_zero_page(memory[cpu.PC+1]));
-				LDA_ZeroPage(memory[cpu.PC+1]);
+				cycles = LDA_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDAZPX: 
 				printf("%04x LDAzpx %x ", cpu.PC, get_absolute_x(memory[cpu.PC+1]) );
-				LDA_ZeroPageX(memory[cpu.PC+1]);
+				cycles = LDA_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDAA:
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x LDAa %x ", cpu.PC, addr);
-				LDA_Absolute(addr);
+				cycles = LDA_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDAAX:
 				printf("%04x LDAax %x ", cpu.PC, get_absolute_x(cpu.PC + 1));
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LDA_AbsoluteX(addr);
+				cycles = LDA_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDAAY:
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
 				printf("%04x LDAay  @%04x = %02x ", cpu.PC, addr, get_absolute_y(addr));
-				LDA_AbsoluteY(addr);
+				cycles = LDA_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDAINDX:
 				printf("%04x LDAindx @%04x = %02x ", cpu.PC, memory[cpu.PC+1], get_absolute_y(memory[cpu.PC+1]));
-				LDA_IndirectX(memory[cpu.PC+1]);
+				cycles = LDA_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break; 
 			case OPC_LDAINDY: 
 				printf("%04x LDAindy @%04x = %02x ", cpu.PC, memory[cpu.PC+1], get_absolute_y(memory[cpu.PC+1]));
-				LDA_IndirectY(memory[cpu.PC+1]);
+				cycles = LDA_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 
  			case OPC_LDXI:
 				printf("%04x LDXi ", cpu.PC);
-				LDX_Immediate(memory[cpu.PC+1]);
+				cycles = LDX_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDXZP:
 				printf("%04x LDXzp ", cpu.PC);
-				LDX_ZeroPage(memory[cpu.PC+1]);
+				cycles = LDX_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDXZPY: 
 				printf("%04x LDXzpy ", cpu.PC);
-				LDX_ZeroPageY(memory[cpu.PC+1]);
+				cycles = LDX_ZeroPageY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDXA:
 				printf("%04x LDXa ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LDX_Absolute(addr);
+				cycles = LDX_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDXAY:
 				printf("%04x LDXay ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LDX_AbsoluteY(addr);
+				cycles = LDX_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 
  			case OPC_LDYI:
 				printf("%04x ldy ", cpu.PC);
-				LDY_Immediate(memory[cpu.PC+1]);
+				cycles = LDY_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDYZP:
 				printf("%04x ldy ", cpu.PC);
-				LDY_ZeroPage(memory[cpu.PC+1]);
+				cycles = LDY_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDYZPX: 
 				printf("%04x ldy ", cpu.PC);
-				LDY_ZeroPageX(memory[cpu.PC+1]);
+				cycles = LDY_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LDYA:
 				printf("%04x ldy ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LDY_Absolute(addr);
+				cycles = LDY_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LDYAX:
 				printf("%04x ldy ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LDY_AbsoluteX(addr);
+				cycles = LDY_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
  			case OPC_LSRACC:
 				printf("%04x lsr ", cpu.PC);
-				LSR_Accumulator(memory[cpu.PC+1]);
+				cycles = LSR_Accumulator(memory[cpu.PC+1]);
 				cpu.PC += 1;
 				break;
  			case OPC_LSRZP:
 				printf("%04x lsr ", cpu.PC);
-				LSR_ZeroPage(memory[cpu.PC+1]);
+				cycles = LSR_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LSRZPX: 
 				printf("%04x lsr ", cpu.PC);
-				LSR_ZeroPageX(memory[cpu.PC+1]);
+				cycles = LSR_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
  			case OPC_LSRA:
 				printf("%04x lsr ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LSR_Absolute(addr);
+				cycles = LSR_Absolute(addr);
 				cpu.PC += 3;
 				break;
  			case OPC_LSRAX:
 				printf("%04x lsr ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				LSR_AbsoluteX(addr);
+				cycles = LSR_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
@@ -706,6 +733,7 @@ int main(int argc, char *argv[]){
 			case OPC_ING5 :
 			case OPC_ING6 :
 				printf("%04x NOP ", cpu.PC);
+				cycles = 2;
 				cpu.PC += 3;
 				break;
 
@@ -723,6 +751,7 @@ int main(int argc, char *argv[]){
 			case OPC_SKB11 :
 			case OPC_SKB12 :
 				printf("%04x NOP ", cpu.PC);
+				cycles = 2;
 				cpu.PC += 2;
 				break;
 	
@@ -733,219 +762,220 @@ int main(int argc, char *argv[]){
 			case OPC_NOP_DUP4:
 			case OPC_NOP_DUP5:
 				printf("%04x NOP ", cpu.PC);
+				cycles = 2;
 				cpu.PC += 1;
 				break;
 			
 			case OPC_ORAI:
 				printf("%04x ora ", cpu.PC);
-				ORA_Immediate(memory[cpu.PC+1]);
+				cycles = ORA_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ORAZP:
 				printf("%04x ora ", cpu.PC);
-				ORA_ZeroPage(memory[cpu.PC+1]);
+				cycles = ORA_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ORAZPX: 
 				printf("%04x ora ", cpu.PC);
-				ORA_ZeroPageX(memory[cpu.PC+1]);
+				cycles = ORA_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ORAA:
 				printf("%04x ora ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ORA_Absolute(addr);
+				cycles = ORA_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ORAAX:
 				printf("%04x ora ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ORA_AbsoluteX(addr);
+				cycles = ORA_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ORAAY:
 				printf("%04x ora ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ORA_AbsoluteY(addr);
+				cycles = ORA_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ORAINDX:
 				printf("%04x ora ", cpu.PC);
-				ORA_IndirectX(memory[cpu.PC+1]);
+				cycles = ORA_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ORAINDY:	
 				printf("%04x ora ", cpu.PC);
-				ORA_IndirectY(memory[cpu.PC+1]);
+				cycles = ORA_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 		
 			case OPC_PHAIMP:
 				printf("%04x pha ", cpu.PC);
-				PHA();
+				cycles = PHA();
 				cpu.PC += 1;
 				break;
 			case OPC_PHPIMP:
 				printf("%04x php ", cpu.PC);
-				PHP();
+				cycles = PHP();
 				cpu.PC += 1;
 				break;
 			case OPC_PLAIMP:
 				printf("%04x pla ", cpu.PC);
-				PLA();
+				cycles = PLA();
 				cpu.PC += 1;
 				break;
 			case OPC_PLPIMP:
 				printf("%04x plp ", cpu.PC);
-				PLP();
+				cycles = PLP();
 				cpu.PC += 1;
 				break;
 
 			case OPC_ROLACC:
 				printf("%04x rol ", cpu.PC);
-				ROL_Accumulator();
+				cycles = ROL_Accumulator();
 				cpu.PC += 1;
 				break;
 			case OPC_ROLZP:
 				printf("%04x rol ", cpu.PC);
-				ROL_ZeroPage(memory[cpu.PC+1]);
+				cycles = ROL_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ROLZPX:
 				printf("%04x rol ", cpu.PC);
-				ROL_ZeroPageX(memory[cpu.PC+1]);
+				cycles = ROL_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_ROLA:
 				printf("%04x rol ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ROL_Absolute(addr);
+				cycles = ROL_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_ROLAX:
 				printf("%04x rol ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ROL_AbsoluteX(addr);
+				cycles = ROL_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 	
 
 			case OPC_RORACC:
 				printf("%04x ROR ", cpu.PC);
-				ROR_Accumulator();
+				cycles = ROR_Accumulator();
 				cpu.PC += 1;
 				break;
 			case OPC_RORZP:
 				printf("%04x ROR ", cpu.PC);
-				ROR_ZeroPage(memory[cpu.PC+1]);
+				cycles = ROR_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_RORZPX:
 				printf("%04x ROR ", cpu.PC);
-				ROR_ZeroPageX(memory[cpu.PC+1]);
+				cycles = ROR_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_RORA:
 				printf("%04x ROR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ROR_Absolute(addr);
+				cycles = ROR_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_RORAX:
 				printf("%04x ROR ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				ROR_AbsoluteX(addr);
+				cycles = ROR_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_RTIIMP:
 				printf("%04x rti ", cpu.PC);
-				RTI();
+				cycles = RTI();
 				break;
 
 			case OPC_RTSIMP:
 				printf("%04x rts ", cpu.PC);
-				RTS();
+				cycles = RTS();
 				cpu.PC++;
 				break;
 
 			case OPC_SBCI_U:
 			case OPC_SBCI:
 				printf("%04x SBCi %02x ", cpu.PC, memory[cpu.PC+1]);
-				SBC_Immediate(memory[cpu.PC+1]);
+				cycles = SBC_Immediate(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_SBCZP:
 				printf("%04x sbc ", cpu.PC);
-				SBC_ZeroPage(memory[cpu.PC+1]);
+				cycles = SBC_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_SBCZPX:
 				printf("%04x sbc ", cpu.PC);
-				SBC_ZeroPageX(memory[cpu.PC+1]);
+				cycles = SBC_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_SBCA:
 				printf("%04x sbc ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				SBC_Absolute(addr);
+				cycles = SBC_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_SBCAX:
 				printf("%04x sbc ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				SBC_AbsoluteX(addr);
+				cycles = SBC_AbsoluteX(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_SBCAY:
 				printf("%04x sbc ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				SBC_AbsoluteY(addr);
+				cycles = SBC_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_SBCINDX:
 				printf("%04x sbc ", cpu.PC);
-				SBC_IndirectX(memory[cpu.PC+1]);
+				cycles = SBC_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_SBCINDY:
 				printf("%04x sbc ", cpu.PC);
-				SBC_IndirectY(memory[cpu.PC+1]);
+				cycles = SBC_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			
 			case OPC_SECIMP:
 				printf("%04x sec ", cpu.PC);
-				SEC();
+				cycles = SEC();
 				cpu.PC += 1;	
 				break;
 
 			case OPC_SEDIMP:
 				printf("%04x sed ", cpu.PC);
-				SED();
+				cycles = SED();
 				cpu.PC += 1;	
 				break;
 
 			case OPC_SEIIMP:
 				printf("%04x sei ", cpu.PC);
-				SEI();
+				cycles = SEI();
 				cpu.PC += 1;	
 				break;
 
 			case OPC_STAZP:
 				printf("%04x STA ", cpu.PC);
-				STA_ZeroPage(memory[cpu.PC+1]);
+				cycles = STA_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STAZPX:
 				printf("%04x sta ", cpu.PC);
-				STA_ZeroPageX(memory[cpu.PC+1]);
+				cycles = STA_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STAA:
 				printf("%04x sta ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				STA_Absolute(addr);
+				cycles = STA_Absolute(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_STAAX:
@@ -957,81 +987,81 @@ int main(int argc, char *argv[]){
 			case OPC_STAAY:
 				printf("%04x sta ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				STA_AbsoluteY(addr);
+				cycles = STA_AbsoluteY(addr);
 				cpu.PC += 3;
 				break;
 			case OPC_STAINDX:
 				printf("%04x sta ", cpu.PC);
-				STA_IndirectX(memory[cpu.PC+1]);
+				cycles = STA_IndirectX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STAINDY:
 				printf("%04x sta ", cpu.PC);
-				STA_IndirectY(memory[cpu.PC+1]);
+				cycles = STA_IndirectY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 
 			case OPC_STXZP:
 				printf("%04x stx ", cpu.PC);
-				STX_ZeroPage(memory[cpu.PC+1]);
+				cycles = STX_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STXZPY:
 				printf("%04x stx ", cpu.PC);
-				STX_ZeroPageY(memory[cpu.PC+1]);
+				cycles = STX_ZeroPageY(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STXA:
 				printf("%04x stx ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				STX_Absolute(addr);
+				cycles = STX_Absolute(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_STYZP:
 				printf("%04x sty ", cpu.PC);
-				STY_ZeroPage(memory[cpu.PC+1]);
+				cycles = STY_ZeroPage(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STYZPX:
 				printf("%04x sty ", cpu.PC);
-				STY_ZeroPageX(memory[cpu.PC+1]);
+				cycles = STY_ZeroPageX(memory[cpu.PC+1]);
 				cpu.PC += 2;
 				break;
 			case OPC_STYA:
 				printf("%04x sty ", cpu.PC);
 				addr = memory[cpu.PC+1] + (memory[cpu.PC+2] << 8);
-				STY_Absolute(addr);
+				cycles = STY_Absolute(addr);
 				cpu.PC += 3;
 				break;
 
 			case OPC_TAXIMP:
 				printf("%04x tax ", cpu.PC);
-				TAX();
+				cycles = TAX();
 				cpu.PC += 1;
 				break;
 
 			case OPC_TAYIMP:
 				printf("%04x tay ", cpu.PC);
-				TAY();
+				cycles = TAY();
 				cpu.PC += 1;
 				break;
 
 			case OPC_TSXIMP:
 				printf("%04x tsx ", cpu.PC);
-				TSX();
+				cycles = TSX();
 				cpu.PC += 1;
 				break;
 
 			case OPC_TXAIMP:
 				printf("%04x txa ", cpu.PC);
-				TXA();
+				cycles = TXA();
 				cpu.PC += 1;
 				break;
 
 			case OPC_TXSIMP:
 				printf("%04x txs ", cpu.PC);
-				TXS();
+				cycles = TXS();
 				printf("txs %x", cpu.SP);
 				cpu.PC += 1;
 				break;
@@ -1383,11 +1413,15 @@ int main(int argc, char *argv[]){
 				printf("%04x NOP %3x ", cpu.PC, memory[cpu.PC]);
 				++cpu.PC;
 		}
+
+		nsleep(TICK_LENGTH * cycles);
+		ticks += cycles;
 		i++;
 		printf("\n");
 	}
 	fclose(file);
 
-	printf("############## Emulator shutdown ##############");
+	printf("############## Emulator shutdown ##############\n");
+	printf("Cycles excuted %ld\n", ticks);
 	return EXIT_SUCCESS;
 }

@@ -1,4 +1,5 @@
 import re
+import sys
 
 class Line:
 	def __init__(self):
@@ -71,26 +72,33 @@ def parse_ref(y, ly):
 	y = re.sub(r'SP:[0-9A-F]{2}', '', y)
 	ly.sp = m.group(0)[3:].upper()
 
-ref = open("./ref")
-log = open('./logs')
+log = open(sys.argv[1])
+ref = open(sys.argv[2])
 
 lx = Line()
 ly = Line()
 
 i = 1
-for x in log:
-	y = ref.readline()
+
+passed = True
+for x, y in zip(log, ref):
+	print("------------", i, "------------");
+	print("x", x, end="")
+	print("y", y, end="")
 	parse_log(x, lx)
 	parse_ref(y, ly)
 
 	if lx.a != ly.a or lx.x != ly.x or lx.y != ly.y or lx.p != ly.p or lx.sp != ly.sp or lx.add != ly.add or lx.inst != ly.inst:
-		print('line({})'.format(i))
 		print('log: {}'.format(lx))
 		print('ref: {}'.format(ly))
-		rep = input('> ')
-		if rep == 'q':
-			break
+		passed = False
+		break
+# 		rep = input('> ')
+# 		if rep == 'q':
+# 			break
 	i += 1
+
+print(f"Test status = {'passed' if passed else 'failed'}")
 
 ref.close()
 log.close()
